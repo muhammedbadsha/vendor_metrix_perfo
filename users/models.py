@@ -19,3 +19,20 @@ class CustomUser(AbstractBaseUser):
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'username'
+
+
+
+class CustomUserToken(models.Model):
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
+    token = models.CharField(max_length=255)  # Example field for the token
+
+    def __str__(self):
+        return self.user.username
+    
+
+
+# class Product(models.Model):
+#     product_name = models.CharField(max_length=255,null=True, blank=True)
+#     product_price = models.CharField(max_length=255,null=True, blank=True)
+#     def __str__(self) -> str:
+#         return self.product_name

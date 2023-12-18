@@ -1,21 +1,25 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status,permissions,authentication
-
-from rest_framework.authentication import BaseAuthentication
-from rest_framework.exceptions import AuthenticationFailed
-from django.contrib.auth.models import User
+from rest_framework import status, permissions, authentication
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.authtoken.models import Token
+from django.shortcuts import get_object_or_404
+from django.contrib.auth import authenticate,login,logout
 
 from django.shortcuts import render
 
 from .models import CustomUser
-from .serilizers import UserRegistrationSerializer
+from .serilizers import UserRegistrationSerializer,LoginSerializer
+from django.conf import settings
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 # Create your views here.
 
 
 class UserRegistrationView(APIView):
     # authentication_classes = [authentication.BaseAuthentication]
     permission_classes = [permissions.IsAuthenticated]
+
     def get(self, request):
         user = CustomUser.objects.all()
         serializer = UserRegistrationSerializer(user, many=True)
@@ -28,26 +32,64 @@ class UserRegistrationView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
 
 
-class CustomAuthentication(BaseAuthentication):
-    def authenticate(self, request):
-        # Your custom authentication logic goes here
-        # For example, you might check a token in the request header
 
-        token = request.headers.get('Authorization')
-        if not token:
-            return None
 
-        try:
-            user = User.objects.get(username=token)
-        except User.DoesNotExist:
-            raise AuthenticationFailed('No such user')
+class LoginUserAPIView(APIView):
+    permission_classes = [permissions.AllowAny]
+#     def get(self, request):
+#         return Response({"value":"login field"})
+    """This api will handle login and return token for authenticate user."""
+    def post(self,request):
+            serializer = LoginSerializer(data = request.data)
+            if serializer.is_valid():
+                    username = serializer.validated_data["username"]
+                    password = serializer.validated_data["password"]
+                    user = authenticate(request, username=username, password=password)
+                    if user is not None:
+                        """We are reterving the token for authenticated user."""
+                        token, created = Token.objects.get_or_create(user=user)
 
-        return (user, None)
+                        response = {
+                               "status": status.HTTP_200_OK,
+                               "message": "success",
+                               "data": {
+                                       "Token" : token.key
+                                       }
+                               }
+                        return Response(response, status = status.HTTP_200_OK)
+                    else :
+                        response = {
+                               "status": status.HTTP_401_UNAUTHORIZED,
+                               "message": "Invalid Email or Password",
+                               }
+                        return Response(response, status = status.HTTP_401_UNAUTHORIZED)
+            response = {
+                 "status": status.HTTP_400_BAD_REQUEST,
+                 "message": "bad request",
+                 "data": serializer.errors
+                 }
+            return Response(response, status = status.HTTP_400_BAD_REQUEST)
 
-class LoginUser(APIView):
-    def post(self, request):
+
+# class CreateProductView(APIView):
+#      def get(self, request):
+#           product = Product.objects.all()
+
+#           serializers_class = CreateProductSerializer(product,many=True)
+#           return Response(serializers_class.data,status=status.HTTP_200_OK)
+     
+
+#      def post(self, request):
+#         serializer = CreateProductSerializer(data=request.data)
+
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
+     
+
+
+     
         
-        return Response()

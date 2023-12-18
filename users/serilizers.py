@@ -1,7 +1,5 @@
 from rest_framework import serializers
 from .models import CustomUser
-from django.contrib.auth.hashers import make_password
-from django.core.
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -14,15 +12,16 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return user
     
 
-class UserLoginSerializer(serializers.ModelSerializer):
+class LoginSerializer(serializers.ModelSerializer):
+    username = serializers.CharField()
     class Meta:
-        model = CustomUser
-        fields = ['username', 'password']
+            model = CustomUser
+            fields = ['username','password']
 
-    def authenticate(self,validated_data):
-        username = validated_data['username']
-        password = validated_data['password']
-        
-        user = CustomUser.objects.get(username=username,password=password)
-        if user is not None:
-            
+
+# class CreateProductSerializer(serializers.ModelSerializer):
+#      class Meta:
+          
+#           model = Product
+#           fields = ['product_name','product_price']
+    
